@@ -371,8 +371,8 @@ public class TrimeService extends InputMethodService {
     @Override
     public void onStartInput(EditorInfo attribute, boolean restarting) {
         // Function.printStackTrace("onStartInput");
-        if (BuildConfig.DEBUG)
-            android.util.Log.i(TAG, "onStartInput: " + attribute + ":" + restarting);
+        //if (BuildConfig.DEBUG)
+            android.util.Log.w(TAG, "onStartInput: " + attribute + ":" + restarting);
         super.onStartInput(attribute, restarting);
         mShowComposingText = ThemeManager.getStyle().getStyle("composition", ThemeManager.getStyle().getStyle("preedit")).getBoolean("show", true);
         inlinePreedit = ThemeManager.getInlinePreedit();
@@ -461,9 +461,9 @@ public class TrimeService extends InputMethodService {
         if (reset_ascii_mode) mAsciiMode = false;
         // Select a keyboard based on the input type of the editing field.
         //mKeyboardSwitch.init(getMaxWidth()); //橫豎屏切換時重置鍵盤
-        if (BuildConfig.DEBUG)
-            android.util.Log.i(TAG, "onStartInput: " + keyboard);
-        if (!TextUtils.isEmpty(keyboard) && !keyboard.equals(mLastInputClass))
+        //if (BuildConfig.DEBUG)
+        android.util.Log.w(TAG, "onStartInput: " + keyboard);
+        if (!TextUtils.isEmpty(keyboard)/* && !keyboard.equals(mLastInputClass)*/)
             setKeyboard(keyboard);
         else
             updateRimeOption();

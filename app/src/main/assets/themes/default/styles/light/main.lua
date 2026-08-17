@@ -119,6 +119,17 @@ key.pressed = {
         text_color = 0xff444444,
     }
 }
+--按键按下遮罩
+key.mask = {
+    show=false,
+    --宽度缩放
+    scale_x = 2,
+    --高度缩放
+    scale_y = 2,
+    background = 0x33000000,
+    corner_radius = 16,
+}
+
 --按键预览
 key.preview = {
     --宽度缩放

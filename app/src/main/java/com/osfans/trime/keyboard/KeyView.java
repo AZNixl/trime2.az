@@ -14,6 +14,7 @@ import android.graphics.Color;
 import android.graphics.PorterDuff;
 import android.graphics.PorterDuffColorFilter;
 import android.graphics.Rect;
+import android.graphics.drawable.AnimationDrawable;
 import android.graphics.drawable.Drawable;
 import android.graphics.drawable.GradientDrawable;
 import android.graphics.drawable.RippleDrawable;
@@ -84,6 +85,9 @@ public class KeyView extends FrameLayout implements View.OnClickListener {
     private TextView[] mHints = new TextView[8];
     private boolean _hide_key_hint;
     private final float mMinPx=ThemeManager.dp2px(12);
+    // --- 新增遮罩相关变量 ---
+    private View mMaskView;
+    private KeyStyle mMaskStyle;
 
     // --- 3. 构造函数 ---
     public KeyView(@NonNull Context context) {
@@ -240,7 +244,14 @@ public class KeyView extends FrameLayout implements View.OnClickListener {
         float translationZ = isPressed ? mPressedStyle.getTranslationZ() : 0;
         float translationY = isPressed ? mPressedStyle.getTranslationY() : 0;
         float translationX = isPressed ? mPressedStyle.getTranslationX() : 0;
-
+// 1. 计算/获取 Z 轴提升值
+        // 如果 PressedStyle 没有设置 translationZ，按下时默认给予一个较大的 Z 轴偏移量（例如 20dp 对应的 px）
+        float pressedZ = mPressedStyle.getTranslationZ();
+        if (pressedZ == 0 && isPressed) {
+            pressedZ = ThemeManager.dp2px(20); // 提升 Z 轴，确保覆盖周围按键
+        }
+        // 2. 将此 KeyView 自身在父容器中的 Z 轴提升（防止自身及子 View/遮罩被后刷新的 View 遮挡）
+        setTranslationZ(isPressed ? pressedZ : 0);
         keyRoot.animate()
                 .scaleX(scaleX)
                 .scaleY(scaleY)
@@ -250,6 +261,51 @@ public class KeyView extends FrameLayout implements View.OnClickListener {
                 .setDuration(50)
                 .setInterpolator(FAST_OUT_SLOW_IN)
                 .start();
+
+        // ====== 2. 新增：遮罩特效动画处理 ======
+        if (mMaskView != null) {
+            mMaskView.animate().cancel(); // 取消正在进行的遮罩动画
+
+            if (isPressed) {
+                mMaskView.setVisibility(VISIBLE);
+
+                // 按下特效：透明度淡入，配合微小的缩放效果
+                mMaskView.setAlpha(0f);
+                mMaskView.setScaleX(0.8f);
+                mMaskView.setScaleY(0.8f);
+
+                mMaskView.animate()
+                        .alpha(1.0f)
+                        .scaleX(mMaskStyle.getScaleX())
+                        .scaleY(mMaskStyle.getScaleY())
+                        .setDuration(100)
+                        .setInterpolator(FAST_OUT_SLOW_IN)
+                        .start();
+
+                // 如果遮罩背景是可播放的动画 (如 Frame Animation)
+                Drawable bg = mMaskView.getBackground();
+                if (bg instanceof AnimationDrawable) {
+                    ((AnimationDrawable) bg).start();
+                }
+            } else {
+                // 抬起特效：淡出并隐藏
+                mMaskView.animate()
+                        .alpha(0f)
+                        .setDuration(150)
+                        .withEndAction(new Runnable() {
+                            @Override
+                            public void run() {
+                                mMaskView.setVisibility(GONE);
+                                // 停止帧动画
+                                Drawable bg = mMaskView.getBackground();
+                                if (bg instanceof AnimationDrawable) {
+                                    ((AnimationDrawable) bg).stop();
+                                }
+                            }
+                        })
+                        .start();
+            }
+        }
 
         // 2. 背景过渡动画
         if (transition != null) {
@@ -397,6 +453,14 @@ public class KeyView extends FrameLayout implements View.OnClickListener {
 
     @Override
     protected void onDetachedFromWindow() {
+        // ====== 新增：取消遮罩动画 ======
+        if (mMaskView != null) {
+            mMaskView.animate().cancel();
+            Drawable bg = mMaskView.getBackground();
+            if (bg instanceof android.graphics.drawable.AnimationDrawable) {
+                ((android.graphics.drawable.AnimationDrawable) bg).stop();
+            }
+        }
         // 1. 停止并取消所有正在运行的属性动画，释放引用
         if (keyRoot != null) {
             keyRoot.animate().cancel();
@@ -696,6 +760,7 @@ public class KeyView extends FrameLayout implements View.OnClickListener {
         keyRoot.setBackground(transition);
         //}
 
+
         // 初始化 Click TextView
         mClick = new TextView(getContext());
         mClick.setIncludeFontPadding(false);
@@ -747,6 +812,33 @@ public class KeyView extends FrameLayout implements View.OnClickListener {
             }
             addView(keyPreview, new LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT));
         }
+        // ====== 新增：初始化按下遮罩 View ======
+        mMaskStyle = mPressedStyle.getKeyStyle("mask"); // 支持在配色/主题样式中单独配置 mask 属性
+        if (mMaskStyle != null && mMaskStyle.isShow()) {
+            mMaskView = new View(getContext());
+            mMaskView.setClipToOutline(false); // 允许阴影溢出边界绘制
+
+            // 1. 设置遮罩背景：可以是 ColorDrawable, GradientDrawable, LuaBitmapDrawable (GIF/视频), 或 AnimationDrawable
+            Drawable maskBg = mMaskStyle.getBackground(0);
+            if (maskBg != null) {
+                mMaskView.setBackground(maskBg);
+            } else {
+                // 默认兜底：半透明黑色遮罩
+                mMaskView.setBackgroundColor(0x33000000);
+            }
+
+            // 默认隐藏
+            mMaskView.setAlpha(0f);
+            mMaskView.setVisibility(GONE);
+
+            // 2. 添加到 keyRoot 中，铺满整个按键
+            FrameLayout.LayoutParams maskParams = new FrameLayout.LayoutParams(
+                    ViewGroup.LayoutParams.MATCH_PARENT,
+                    ViewGroup.LayoutParams.MATCH_PARENT
+            );
+            keyRoot.addView(mMaskView, maskParams);
+        }
+
         keyRoot.setOutlineProvider(ViewOutlineProvider.BACKGROUND);
         keyRoot.setClipToOutline(false); // 允许阴影溢出边界绘制
     }

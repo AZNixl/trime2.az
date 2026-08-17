@@ -7,15 +7,19 @@ import android.graphics.Movie;
 import android.graphics.Paint;
 import android.graphics.PixelFormat;
 import android.graphics.Rect;
+import android.graphics.SurfaceTexture;
 import android.graphics.drawable.BitmapDrawable;
 import android.graphics.drawable.Drawable;
+import android.media.MediaPlayer;
 import android.os.Handler;
+import android.os.Looper;
 import android.util.Log;
+import android.view.Surface;
 
 import com.androlua.AsyncTaskX;
+import com.osfans.trime.BuildConfig;
 
 import org.luaj.LuaValue;
-import com.osfans.trime.BuildConfig;
 
 import java.io.File;
 import java.io.FileInputStream;
@@ -27,9 +31,10 @@ import java.net.URL;
 
 /**
  * Created by nirenr on 2018/09/05 0005.
+ * Updated to support video playback as background.
  */
 
-public class LuaBitmapDrawable extends Drawable implements Runnable, LuaGcable {
+public class LuaBitmapDrawable extends Drawable implements Runnable, LuaGcable, SurfaceTexture.OnFrameAvailableListener {
 
     private LuaContext mLuaContext;
     private int mDuration;
@@ -44,12 +49,21 @@ public class LuaBitmapDrawable extends Drawable implements Runnable, LuaGcable {
     private int mScaleType = FIT_XY;
     private GifDecoder mGifDecoder;
     private GifDecoder mGifDecoder2;
-    private Handler mHandler;
+    private Handler mHandler = new Handler(Looper.getMainLooper());
     private GifDecoder.GifFrame mGifFrame;
     private int mDelay;
     private boolean mGc;
-    private int mAlpha=255;
-    private Paint mPaint=new Paint();
+    private int mAlpha = 255;
+    private Paint mPaint = new Paint();
+
+    // ====== 视频背景相关属性 ======
+    private MediaPlayer mMediaPlayer;
+    private SurfaceTexture mSurfaceTexture;
+    private Surface mSurface;
+    private boolean mIsVideo = false;
+    private int mVideoWidth = 0;
+    private int mVideoHeight = 0;
+    private boolean mIsVideoReady = false;
 
     public static void setCacheTime(long time) {
         mCacheTime = time;
@@ -83,22 +97,23 @@ public class LuaBitmapDrawable extends Drawable implements Runnable, LuaGcable {
         mLoadingDrawable = new LoadingDrawable(context);
         init(path);
     }
+
     public LuaBitmapDrawable(String path) {
         mLoadingDrawable = new LoadingDrawable();
         init(path);
     }
 
     private void initHttp(final LuaContext context, final String path) {
-        if(LuaBitmap.checkCache(context, path))
-            init(LuaBitmap.getCachePath(context,path));
+        if (LuaBitmap.checkCache(context, path))
+            init(LuaBitmap.getCachePath(context, path));
         new AsyncTaskX<String, String, String>() {
             @Override
             protected String doInBackground(String... strings) {
                 try {
                     return getHttpBitmap(context, path);
                 } catch (Exception e) {
-                    if(BuildConfig.DEBUG)
-			    e.printStackTrace();
+                    if (BuildConfig.DEBUG)
+                        e.printStackTrace();
                 }
                 return "";
             }
@@ -111,10 +126,16 @@ public class LuaBitmapDrawable extends Drawable implements Runnable, LuaGcable {
     }
 
     private void init(final String path) {
+        // 判断是否为常见的视频后缀
+        if (isVideoFile(path)) {
+            initVideo(path);
+            return;
+        }
+
         try {
-            if(mLuaContext!=null)
+            if (mLuaContext != null)
                 mBitmapDrawable = new BitmapDrawable(LuaBitmap.getLocalBitmap(mLuaContext, path));
-        } catch (Exception e){
+        } catch (Exception e) {
             e.printStackTrace();
         }
         try {
@@ -123,26 +144,84 @@ public class LuaBitmapDrawable extends Drawable implements Runnable, LuaGcable {
                 public void parseOk(boolean parseStatus, int frameIndex) {
                     if (!parseStatus && frameIndex < 0) {
                         init2(path);
-                    } else if (parseStatus && mGifDecoder2 == null && mGifDecoder.getFrameCount() > 1) {     //当帧数大于1时，启动动画线程
+                    } else if (parseStatus && mGifDecoder2 == null && mGifDecoder.getFrameCount() > 1) {
                         mGifDecoder2 = mGifDecoder;
                         invalidateSelf();
-                   }
+                    }
                 }
             });
             mGifDecoder.start();
         } catch (Exception e) {
-            if(BuildConfig.DEBUG)
-			    e.printStackTrace();
+            if (BuildConfig.DEBUG)
+                e.printStackTrace();
             init2(path);
         }
-
-
     }
 
+    /**
+     * 判断路径是否为视频格式
+     */
+    private boolean isVideoFile(String path) {
+        if (path == null) return false;
+        String lower = path.toLowerCase();
+        return lower.endsWith(".mp4") || lower.endsWith(".mkv") ||
+               lower.endsWith(".webm") || lower.endsWith(".3gp") || lower.endsWith(".avi");
+    }
+
+    /**
+     * 初始化视频播放器
+     */
+    private void initVideo(final String path) {
+        mIsVideo = true;
+        try {
+            mMediaPlayer = new MediaPlayer();
+            mMediaPlayer.setDataSource(path);
+            mMediaPlayer.setLooping(true); // 视频背景默认循环播放
+            mMediaPlayer.setVolume(0, 0);  // 背景视频默认静音
+
+            // 创建离屏渲染纹理
+            mSurfaceTexture = new SurfaceTexture(10);
+            mSurfaceTexture.setOnFrameAvailableListener(this);
+            mSurface = new Surface(mSurfaceTexture);
+            mMediaPlayer.setSurface(mSurface);
+
+            mMediaPlayer.setOnPreparedListener(new MediaPlayer.OnPreparedListener() {
+                @Override
+                public void onPrepared(MediaPlayer mp) {
+                    mVideoWidth = mp.getVideoWidth();
+                    mVideoHeight = mp.getVideoHeight();
+                    mIsVideoReady = true;
+                    mp.start();
+                    invalidateSelf();
+                }
+            });
+
+            mMediaPlayer.setOnErrorListener(new MediaPlayer.OnErrorListener() {
+                @Override
+                public boolean onError(MediaPlayer mp, int what, int extra) {
+                    mIsVideo = false;
+                    init2(path); // 视频解码失败后降级处理
+                    return true;
+                }
+            });
+
+            mMediaPlayer.prepareAsync();
+        } catch (Exception e) {
+            if (BuildConfig.DEBUG) e.printStackTrace();
+            mIsVideo = false;
+            init2(path);
+        }
+    }
+
+    @Override
+    public void onFrameAvailable(SurfaceTexture surfaceTexture) {
+        // 当视频有新一帧准备好时，通知重绘 Canvas
+        mHandler.post(this);
+    }
 
     private void init2(String path) {
         if (path.isEmpty()) {
-            new Handler().postDelayed(new Runnable() {
+            mHandler.postDelayed(new Runnable() {
                 @Override
                 public void run() {
                     mLoadingDrawable.setState(-1);
@@ -152,7 +231,6 @@ public class LuaBitmapDrawable extends Drawable implements Runnable, LuaGcable {
             return;
         }
 
-        //mMovie = Movie.decodeFile(path);
         if (mMovie != null) {
             mDuration = mMovie.duration();
             if (mDuration == 0)
@@ -162,18 +240,18 @@ public class LuaBitmapDrawable extends Drawable implements Runnable, LuaGcable {
                 mNineBitmapDrawable = new NineBitmapDrawable(path);
             } catch (Exception e) {
                 try {
-                    if(mLuaContext!=null)
+                    if (mLuaContext != null)
                         mBitmapDrawable = new BitmapDrawable(LuaBitmap.getLocalBitmap(mLuaContext, path));
                     else
                         mBitmapDrawable = new BitmapDrawable(LuaBitmap.getLocalBitmap(path));
                 } catch (Exception e1) {
-                    if(BuildConfig.DEBUG)
+                    if (BuildConfig.DEBUG)
                         e1.printStackTrace();
                 }
             }
         }
-        if (mMovie == null && mBitmapDrawable == null && mNineBitmapDrawable == null) {
-            new Handler().postDelayed(new Runnable() {
+        if (mMovie == null && mBitmapDrawable == null && mNineBitmapDrawable == null && !mIsVideo) {
+            mHandler.postDelayed(new Runnable() {
                 @Override
                 public void run() {
                     mLoadingDrawable.setState(-1);
@@ -184,17 +262,17 @@ public class LuaBitmapDrawable extends Drawable implements Runnable, LuaGcable {
     }
 
     public int getWidth() {
-        if (mMovie != null) {
+        if (mIsVideo) {
+            return mVideoWidth;
+        } else if (mMovie != null) {
             return mMovie.width();
         } else if (mGifDecoder2 != null) {
-            if(mGifFrame==null)
-                mGifFrame=mGifDecoder2.next();
-            if(mGifFrame!=null)
+            if (mGifFrame == null)
+                mGifFrame = mGifDecoder2.next();
+            if (mGifFrame != null)
                 return mGifFrame.image.getWidth();
             return mGifDecoder2.width;
         } else if (mBitmapDrawable != null) {
-            if(mBitmapDrawable instanceof BitmapDrawable)
-                ((BitmapDrawable)mBitmapDrawable).getIntrinsicWidth();
             return mBitmapDrawable.getIntrinsicWidth();
         } else if (mNineBitmapDrawable != null) {
             return mNineBitmapDrawable.getIntrinsicWidth();
@@ -203,17 +281,17 @@ public class LuaBitmapDrawable extends Drawable implements Runnable, LuaGcable {
     }
 
     public int getHeight() {
-        if (mMovie != null) {
+        if (mIsVideo) {
+            return mVideoHeight;
+        } else if (mMovie != null) {
             return mMovie.height();
         } else if (mGifDecoder2 != null) {
-            if(mGifFrame==null)
-                mGifFrame=mGifDecoder2.next();
-            if(mGifFrame!=null)
+            if (mGifFrame == null)
+                mGifFrame = mGifDecoder2.next();
+            if (mGifFrame != null)
                 return mGifFrame.image.getHeight();
             return mGifDecoder2.height;
         } else if (mBitmapDrawable != null) {
-            if(mBitmapDrawable instanceof BitmapDrawable)
-                ((BitmapDrawable)mBitmapDrawable).getIntrinsicHeight();
             return mBitmapDrawable.getIntrinsicHeight();
         } else if (mNineBitmapDrawable != null) {
             return mNineBitmapDrawable.getIntrinsicHeight();
@@ -224,8 +302,26 @@ public class LuaBitmapDrawable extends Drawable implements Runnable, LuaGcable {
     @Override
     public void draw(Canvas canvas) {
         canvas.drawColor(mFillColor);
-        if(mColorFilter!=null)
+        if (mColorFilter != null)
             setColorFilter(mColorFilter);
+
+        // ====== 绘制视频背景 ======
+        if (mIsVideo) {
+            if (mIsVideoReady && mSurfaceTexture != null) {
+                synchronized (this) {
+                    try {
+                        mSurfaceTexture.updateTexImage(); // 更新最新的视频帧纹理
+                    } catch (Exception e) {
+                        // 防止在快速切换或释放时抛出异常
+                    }
+                }
+                // 触发下一帧更新
+                invalidateSelf();
+            }
+            return;
+        }
+
+        // ====== 原有 GIF / Movie / Bitmap 逻辑 ======
         if (mGifDecoder2 != null) {
             long now = System.currentTimeMillis();
             if (mMovieStart == 0 || mGifFrame == null) {
@@ -241,10 +337,10 @@ public class LuaBitmapDrawable extends Drawable implements Runnable, LuaGcable {
             }
             if (mGifFrame != null) {
                 Rect bound = getBounds();
-                BitmapDrawable mBitmapDrawable = new BitmapDrawable(mGifFrame.image);
-                mBitmapDrawable.setColorFilter(mColorFilter);
-                int width = mBitmapDrawable.getIntrinsicWidth();
-                int height = mBitmapDrawable.getIntrinsicHeight();
+                BitmapDrawable bitmapDrawable = new BitmapDrawable(mGifFrame.image);
+                bitmapDrawable.setColorFilter(mColorFilter);
+                int width = bitmapDrawable.getIntrinsicWidth();
+                int height = bitmapDrawable.getIntrinsicHeight();
                 float mScale = 1;
                 if (mScaleType == FIT_XY) {
                     float mScaleX = (float) (bound.right - bound.left) / (float) width;
@@ -267,12 +363,8 @@ public class LuaBitmapDrawable extends Drawable implements Runnable, LuaGcable {
                         top = (int) ((bound.bottom - bound.top) - height);
                         break;
                 }
-                //float mScale = Math.min((float) (bound.bottom - bound.top) / (float) mBitmapDrawable.getIntrinsicHeight(), (float) (bound.right - bound.left) / (float) mBitmapDrawable.getIntrinsicWidth());
-                mBitmapDrawable.setBounds(new Rect(left, top, left + width, top + height));
-                mBitmapDrawable.draw(canvas);
-
-                // canvas.drawBitmap(mGifFrame.image, null, getBounds(), null);
-
+                bitmapDrawable.setBounds(new Rect(left, top, left + width, top + height));
+                bitmapDrawable.draw(canvas);
             }
             invalidateSelf();
         } else if (mMovie != null) {
@@ -309,16 +401,11 @@ public class LuaBitmapDrawable extends Drawable implements Runnable, LuaGcable {
                     top = (int) (((bound.bottom - bound.top)) - height / mScale);
                     break;
             }
-
-            //
-            //canvas.translate(left,top);
             mMovie.draw(canvas, left, top, mPaint);
-
             canvas.restore();
             invalidateSelf();
 
         } else if (mBitmapDrawable != null) {
-
             Rect bound = getBounds();
             int width = mBitmapDrawable.getIntrinsicWidth();
             int height = mBitmapDrawable.getIntrinsicHeight();
@@ -344,12 +431,9 @@ public class LuaBitmapDrawable extends Drawable implements Runnable, LuaGcable {
                     top = (int) ((bound.bottom - bound.top) - height);
                     break;
             }
-            //float mScale = Math.min((float) (bound.bottom - bound.top) / (float) mBitmapDrawable.getIntrinsicHeight(), (float) (bound.right - bound.left) / (float) mBitmapDrawable.getIntrinsicWidth());
             mBitmapDrawable.setBounds(new Rect(left, top, left + width, top + height));
             mBitmapDrawable.draw(canvas);
-            //canvas.drawBitmap(mBitmapDrawable.getBitmap(),getBounds(),getBounds(),new Paint());
         } else if (mNineBitmapDrawable != null) {
-
             mNineBitmapDrawable.setBounds(getBounds());
             mNineBitmapDrawable.draw(canvas);
         } else if (mLoadingDrawable != null) {
@@ -361,12 +445,39 @@ public class LuaBitmapDrawable extends Drawable implements Runnable, LuaGcable {
 
     @Override
     protected void finalize() throws Throwable {
+        super.finalize();
+        releaseVideo();
         if (mGifDecoder2 != null)
             mGifDecoder2.free();
     }
 
-    public void setScaleType(int scaleType) {
+    /**
+     * 释放视频播放相关资源
+     */
+    private void releaseVideo() {
+        if (mMediaPlayer != null) {
+            try {
+                if (mMediaPlayer.isPlaying()) {
+                    mMediaPlayer.stop();
+                }
+                mMediaPlayer.release();
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+            mMediaPlayer = null;
+        }
+        if (mSurface != null) {
+            mSurface.release();
+            mSurface = null;
+        }
+        if (mSurfaceTexture != null) {
+            mSurfaceTexture.release();
+            mSurfaceTexture = null;
+        }
+        mIsVideoReady = false;
+    }
 
+    public void setScaleType(int scaleType) {
         if (mScaleType != scaleType) {
             mScaleType = scaleType;
             invalidateSelf();
@@ -383,27 +494,26 @@ public class LuaBitmapDrawable extends Drawable implements Runnable, LuaGcable {
     @Override
     public void setAlpha(int alpha) {
         mAlpha = alpha;
-        if(mPaint!=null)
+        if (mPaint != null)
             mPaint.setAlpha(alpha);
-        if(mBitmapDrawable!=null)
+        if (mBitmapDrawable != null)
             mBitmapDrawable.setAlpha(alpha);
-        if(mNineBitmapDrawable!=null)
+        if (mNineBitmapDrawable != null)
             mNineBitmapDrawable.setAlpha(alpha);
-        if(mLoadingDrawable!=null)
+        if (mLoadingDrawable != null)
             mLoadingDrawable.setAlpha(alpha);
-
     }
 
     @Override
     public void setColorFilter(ColorFilter colorFilter) {
         mColorFilter = colorFilter;
-        if(mPaint!=null)
+        if (mPaint != null)
             mPaint.setColorFilter(colorFilter);
-        if(mBitmapDrawable!=null)
+        if (mBitmapDrawable != null)
             mBitmapDrawable.setColorFilter(colorFilter);
-        if(mNineBitmapDrawable!=null)
+        if (mNineBitmapDrawable != null)
             mNineBitmapDrawable.setColorFilter(colorFilter);
-        if(mLoadingDrawable!=null)
+        if (mLoadingDrawable != null)
             mLoadingDrawable.setColorFilter(colorFilter);
     }
 
@@ -413,7 +523,6 @@ public class LuaBitmapDrawable extends Drawable implements Runnable, LuaGcable {
     }
 
     public static String getHttpBitmap(LuaContext context, String url) throws IOException {
-        //Log.d(TAG, url);
         String path = context.getLuaExtDir("cache") + "/" + url.hashCode();
         File f = new File(path);
         if (f.exists() && System.currentTimeMillis() - f.lastModified() < mCacheTime) {
@@ -454,6 +563,7 @@ public class LuaBitmapDrawable extends Drawable implements Runnable, LuaGcable {
 
     @Override
     public void gc() {
+        releaseVideo();
         if (mGifDecoder2 != null)
             mGifDecoder2.free();
         if (mBitmapDrawable != null && mBitmapDrawable instanceof BitmapDrawable)
