@@ -121,12 +121,14 @@ key.pressed = {
 }
 --按键按下遮罩
 key.mask = {
-    show=false,
+    show = false,
     --宽度缩放
     scale_x = 2,
     --高度缩放
     scale_y = 2,
     background = 0x33000000,
+    width = 32, --遮罩宽度，单位dp
+    height = 32, --遮罩高度，单位dp
     corner_radius = 16,
 }
 
@@ -357,7 +359,7 @@ preedit = {
     text_size = 18,
     text_color = 0xff222222,
     background = 0xaaffffff,
-    inline="none"--嵌入式编辑 input,composition,preedit
+    inline = "none"--嵌入式编辑 input,composition,preedit
 }
 composition = {
     show = true,

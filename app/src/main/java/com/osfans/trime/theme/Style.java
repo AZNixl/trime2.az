@@ -217,6 +217,10 @@ public class Style {
         return getSize("height", def);
     }
 
+    public int getWidth(int def) {
+        return getSize("width", def);
+    }
+
     public boolean hasKey(String key) {
         return !mTable.rawget(key).isnil();
     }

@@ -84,10 +84,11 @@ public class KeyView extends FrameLayout implements View.OnClickListener {
     //private TextView mHintRight;
     private TextView[] mHints = new TextView[8];
     private boolean _hide_key_hint;
-    private final float mMinPx=ThemeManager.dp2px(12);
+    private final float mMinPx = ThemeManager.dp2px(12);
     // --- 新增遮罩相关变量 ---
     private View mMaskView;
     private KeyStyle mMaskStyle;
+    private boolean mInKeyboard;
 
     // --- 3. 构造函数 ---
     public KeyView(@NonNull Context context) {
@@ -197,7 +198,7 @@ public class KeyView extends FrameLayout implements View.OnClickListener {
         boolean changed = mPressed != pressed;
         mPressed = pressed;
         super.setPressed(pressed);
-
+        showMask(pressed);
 
         if (changed) {
             if (direction == SWIPE_NONE)
@@ -226,6 +227,62 @@ public class KeyView extends FrameLayout implements View.OnClickListener {
         }
     }
 
+    private void showMask(boolean pressed) {
+        if (!mInKeyboard)
+            return;
+        // ====== 2. 新增：遮罩特效动画处理 ======
+        if (mMaskView == null)
+            return;
+        // 1. 计算/获取 Z 轴提升值
+        // 如果 PressedStyle 没有设置 translationZ，按下时默认给予一个较大的 Z 轴偏移量（例如 20dp 对应的 px）
+        float pressedZ = mPressedStyle.getTranslationZ();
+        if (pressedZ == 0 && pressed) {
+            pressedZ = ThemeManager.dp2px(32); // 提升 Z 轴，确保覆盖周围按键
+        }
+        // 2. 将此 KeyView 自身在父容器中的 Z 轴提升（防止自身及子 View/遮罩被后刷新的 View 遮挡）
+        setTranslationZ(pressed ? pressedZ : 0);
+        mMaskView.animate().cancel(); // 取消正在进行的遮罩动画
+
+        if (pressed) {
+            mMaskView.setVisibility(VISIBLE);
+            // 按下特效：透明度淡入，配合微小的缩放效果
+            mMaskView.setAlpha(0f);
+            mMaskView.setScaleX(0.8f);
+            mMaskView.setScaleY(0.8f);
+
+            mMaskView.animate()
+                    .alpha(1.0f)
+                    .scaleX(mMaskStyle.getScaleX())
+                    .scaleY(mMaskStyle.getScaleY())
+                    .setDuration(100)
+                    .setInterpolator(FAST_OUT_SLOW_IN)
+                    .start();
+
+            // 如果遮罩背景是可播放的动画 (如 Frame Animation)
+            Drawable bg = mMaskView.getBackground();
+            if (bg instanceof AnimationDrawable) {
+                ((AnimationDrawable) bg).start();
+            }
+        } else {
+            // 抬起特效：淡出并隐藏
+            mMaskView.animate()
+                    .alpha(0f)
+                    .setDuration(150)
+                    .withEndAction(new Runnable() {
+                        @Override
+                        public void run() {
+                            mMaskView.setVisibility(GONE);
+                            // 停止帧动画
+                            Drawable bg = mMaskView.getBackground();
+                            if (bg instanceof AnimationDrawable) {
+                                ((AnimationDrawable) bg).stop();
+                            }
+                        }
+                    })
+                    .start();
+        }
+    }
+
     @Override
     public void setSelected(boolean selected) {
         mSelected = selected;
@@ -244,14 +301,7 @@ public class KeyView extends FrameLayout implements View.OnClickListener {
         float translationZ = isPressed ? mPressedStyle.getTranslationZ() : 0;
         float translationY = isPressed ? mPressedStyle.getTranslationY() : 0;
         float translationX = isPressed ? mPressedStyle.getTranslationX() : 0;
-// 1. 计算/获取 Z 轴提升值
-        // 如果 PressedStyle 没有设置 translationZ，按下时默认给予一个较大的 Z 轴偏移量（例如 20dp 对应的 px）
-        float pressedZ = mPressedStyle.getTranslationZ();
-        if (pressedZ == 0 && isPressed) {
-            pressedZ = ThemeManager.dp2px(20); // 提升 Z 轴，确保覆盖周围按键
-        }
-        // 2. 将此 KeyView 自身在父容器中的 Z 轴提升（防止自身及子 View/遮罩被后刷新的 View 遮挡）
-        setTranslationZ(isPressed ? pressedZ : 0);
+
         keyRoot.animate()
                 .scaleX(scaleX)
                 .scaleY(scaleY)
@@ -262,50 +312,6 @@ public class KeyView extends FrameLayout implements View.OnClickListener {
                 .setInterpolator(FAST_OUT_SLOW_IN)
                 .start();
 
-        // ====== 2. 新增：遮罩特效动画处理 ======
-        if (mMaskView != null) {
-            mMaskView.animate().cancel(); // 取消正在进行的遮罩动画
-
-            if (isPressed) {
-                mMaskView.setVisibility(VISIBLE);
-
-                // 按下特效：透明度淡入，配合微小的缩放效果
-                mMaskView.setAlpha(0f);
-                mMaskView.setScaleX(0.8f);
-                mMaskView.setScaleY(0.8f);
-
-                mMaskView.animate()
-                        .alpha(1.0f)
-                        .scaleX(mMaskStyle.getScaleX())
-                        .scaleY(mMaskStyle.getScaleY())
-                        .setDuration(100)
-                        .setInterpolator(FAST_OUT_SLOW_IN)
-                        .start();
-
-                // 如果遮罩背景是可播放的动画 (如 Frame Animation)
-                Drawable bg = mMaskView.getBackground();
-                if (bg instanceof AnimationDrawable) {
-                    ((AnimationDrawable) bg).start();
-                }
-            } else {
-                // 抬起特效：淡出并隐藏
-                mMaskView.animate()
-                        .alpha(0f)
-                        .setDuration(150)
-                        .withEndAction(new Runnable() {
-                            @Override
-                            public void run() {
-                                mMaskView.setVisibility(GONE);
-                                // 停止帧动画
-                                Drawable bg = mMaskView.getBackground();
-                                if (bg instanceof AnimationDrawable) {
-                                    ((AnimationDrawable) bg).stop();
-                                }
-                            }
-                        })
-                        .start();
-            }
-        }
 
         // 2. 背景过渡动画
         if (transition != null) {
@@ -361,6 +367,8 @@ public class KeyView extends FrameLayout implements View.OnClickListener {
     }
 
     private void showPreview(boolean isPressed, CharSequence text) {
+        if (!mInKeyboard)
+            return;
         if (mKey == null)
             return;
         if (keyPreview == null)
@@ -447,6 +455,16 @@ public class KeyView extends FrameLayout implements View.OnClickListener {
         if (keyPreview != null) {
             keyPreview.animate().cancel();
             keyPreview.setVisibility(GONE);
+        }
+        if (mInKeyboard)
+            return;
+        ViewParent parent = getParent();
+        while (parent instanceof View) {
+            if (parent instanceof KeyboardView) {
+                mInKeyboard = true;
+                break;
+            }
+            parent = ((View) parent).getParent();
         }
     }
 
@@ -670,17 +688,17 @@ public class KeyView extends FrameLayout implements View.OnClickListener {
                 setSelected(ModifierState.isShifted());
             }
         }
-        if(Config.is_hide_key_hint()==_hide_key_hint)
+        if (Config.is_hide_key_hint() == _hide_key_hint)
             return;
-        _hide_key_hint=Config.is_hide_key_hint();
-        if(Config.is_hide_key_hint()){
+        _hide_key_hint = Config.is_hide_key_hint();
+        if (Config.is_hide_key_hint()) {
             for (TextView hint : mHints) {
-                if(hint!=null)
+                if (hint != null)
                     hint.setVisibility(GONE);
             }
-        }else {
+        } else {
             for (TextView hint : mHints) {
-                if(hint!=null)
+                if (hint != null)
                     hint.setVisibility(VISIBLE);
             }
         }
@@ -833,8 +851,9 @@ public class KeyView extends FrameLayout implements View.OnClickListener {
 
             // 2. 添加到 keyRoot 中，铺满整个按键
             FrameLayout.LayoutParams maskParams = new FrameLayout.LayoutParams(
-                    ViewGroup.LayoutParams.MATCH_PARENT,
-                    ViewGroup.LayoutParams.MATCH_PARENT
+                    mMaskStyle.getWidth(ViewGroup.LayoutParams.MATCH_PARENT),
+                    mMaskStyle.getHeight(ViewGroup.LayoutParams.MATCH_PARENT),
+                    Gravity.CENTER
             );
             keyRoot.addView(mMaskView, maskParams);
         }
@@ -999,9 +1018,9 @@ public class KeyView extends FrameLayout implements View.OnClickListener {
     };
 
     private void showPopup() {
-;       int[] point = new int[2];
+        int[] point = new int[2];
         getLocationOnScreen(point);
-        int x=point[0];
+        int x = point[0];
         int width = getWidth();
         addView(popupKeyboard, new FrameLayout.LayoutParams(popupKeyboard.getRawWidth(), popupKeyboard.getRawHeight(), Gravity.TOP | Gravity.LEFT));
         int dx = x + width / 2 - popupKeyboard.getRawWidth() / 2;
@@ -1010,7 +1029,7 @@ public class KeyView extends FrameLayout implements View.OnClickListener {
             dx = 0;
         else if (dx + popupKeyboard.getRawWidth() > trime.getWidth())
             dx = trime.getWidth() - popupKeyboard.getRawWidth();
-        popupKeyboard.setTranslationX(dx-x);
+        popupKeyboard.setTranslationX(dx - x);
         popupKeyboard.setTranslationY(-popupKeyboard.getRawHeight());
         popupKeyboard.setOffsetX(x - dx);
     }
