@@ -239,16 +239,19 @@ public class KeyView extends FrameLayout implements View.OnClickListener {
         if (pressedZ == 0 && pressed) {
             pressedZ = ThemeManager.dp2px(32); // 提升 Z 轴，确保覆盖周围按键
         }
-        // 2. 将此 KeyView 自身在父容器中的 Z 轴提升（防止自身及子 View/遮罩被后刷新的 View 遮挡）
-        setTranslationZ(pressed ? pressedZ : 0);
         mMaskView.animate().cancel(); // 取消正在进行的遮罩动画
 
         if (pressed) {
+            // 2. 将此 KeyView 自身在父容器中的 Z 轴提升（防止自身及子 View/遮罩被后刷新的 View 遮挡）
+            float z = mMaskStyle.getTranslationZ();
+            setTranslationZ(z >= 0 ? pressedZ + z : -pressedZ + z);
             mMaskView.setVisibility(VISIBLE);
             // 按下特效：透明度淡入，配合微小的缩放效果
             mMaskView.setAlpha(0f);
-            mMaskView.setScaleX(0.8f);
-            mMaskView.setScaleY(0.8f);
+            mMaskView.setScaleX(1f);
+            mMaskView.setScaleY(1f);
+            mMaskView.setTranslationX(mMaskStyle.getTranslationX());
+            mMaskView.setTranslationY(mMaskStyle.getTranslationY());
 
             mMaskView.animate()
                     .alpha(1.0f)
@@ -257,7 +260,6 @@ public class KeyView extends FrameLayout implements View.OnClickListener {
                     .setDuration(100)
                     .setInterpolator(FAST_OUT_SLOW_IN)
                     .start();
-
             // 如果遮罩背景是可播放的动画 (如 Frame Animation)
             Drawable bg = mMaskView.getBackground();
             if (bg instanceof AnimationDrawable) {
@@ -271,6 +273,7 @@ public class KeyView extends FrameLayout implements View.OnClickListener {
                     .withEndAction(new Runnable() {
                         @Override
                         public void run() {
+                            setTranslationZ(0);
                             mMaskView.setVisibility(GONE);
                             // 停止帧动画
                             Drawable bg = mMaskView.getBackground();

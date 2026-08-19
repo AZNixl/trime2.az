@@ -126,9 +126,18 @@ key.mask = {
     scale_x = 2,
     --高度缩放
     scale_y = 2,
+    --高度改变,正数表示显示在按键上，负数显示在按键下
+    translation_z = 1,
+    --水平移动
+    translation_x = 0,
+    --垂直移动
+    translation_y = 0,
+
     background = 0x33000000,
-    width = 32, --遮罩宽度，单位dp
-    height = 32, --遮罩高度，单位dp
+    --遮罩宽度，单位dp，不指定默认用按键宽度
+    width = 32,
+    --遮罩高度，单位dp，不指定默认用按键高度
+    height = 32,
     corner_radius = 16,
 }
 
