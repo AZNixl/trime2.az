@@ -15,6 +15,7 @@ plugins {
     id("com.osfans.trime.opencc-data")
     alias(libs.plugins.aboutlibraries)
     alias(libs.plugins.kotlin.android)
+    alias(libs.plugins.kotlin.compose)
     alias(libs.plugins.kotlin.serialization)
     alias(libs.plugins.kotlin.parcelize)
     alias(libs.plugins.ksp)
@@ -39,7 +40,7 @@ android {
         }
     }
     defaultConfig {
-        applicationId = "com.nirenr.trime"
+        applicationId = "com.nirenr.trime2.az"
         minSdk = 21
         targetSdk = 35
         versionCode = 82
@@ -54,9 +55,9 @@ android {
 
         // --- 新增：注入 APP_KEY ---
         // 从文件中获取，如果文件或 Key 不存在，提供一个默认空字符串，防止编译报错
-        var appKey = project.findProperty("API_KEY") as String
+        val appKey = (project.findProperty("API_KEY") as? String) ?: "\"\""
         buildConfigField("String", "API_KEY", appKey)
-        var appId = project.findProperty("API_ID") as String
+        val appId = (project.findProperty("API_ID") as? String) ?: "\"\""
         buildConfigField("String", "API_ID", appId)
         // -------------------------
     }
@@ -75,12 +76,12 @@ android {
                 "proguard-rules.pro",
             )
             // 2. 引用它
-            signingConfig = signingConfigs.getByName("myCustomConfig")
+            signingConfig = signingConfigs.findByName("myCustomConfig")
             resValue("string", "trime_app_name", "@string/app_name_release")
         }
         debug {
             // 2. 引用它
-            signingConfig = signingConfigs.getByName("myCustomConfig")
+            signingConfig = signingConfigs.findByName("myCustomConfig")
             resValue("string", "trime_app_name", "@string/app_name_debug")
         }
         all {
@@ -93,6 +94,7 @@ android {
     buildFeatures {
         buildConfig = true
         viewBinding = true
+        compose = true
     }
 
     compileOptions {
@@ -212,6 +214,13 @@ dependencies {
     //implementation(libs.splitties.views.dsl.recyclerview)
     //implementation(libs.splitties.views.recyclerview)
     implementation(libs.aboutlibraries.core)
+    // Compose 设置界面
+    implementation(platform(libs.androidx.compose.bom))
+    implementation(libs.androidx.compose.ui)
+    implementation(libs.androidx.compose.material3)
+    implementation(libs.androidx.compose.material.icons.extended)
+    implementation(libs.androidx.navigation.compose)
+    implementation(libs.androidx.activity.compose)
     //implementation(libs.iconics.core)
     //implementation(libs.community.material.typeface) {
     //    artifact { type = "aar" }

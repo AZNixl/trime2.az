@@ -49,13 +49,14 @@ SPDX-License-Identifier: GPL-3.0-or-later
         </provider>
 
 
-        <!-- Using an activity alias to disable/enable the app icon in the launcher -->
+        <!-- 新版设置界面（Compose），桌面图标入口 -->
         <activity
-            android:name="com.osfans.trime.PrefLauncher"
+            android:name="com.osfans.trime.ui.SettingsActivity"
             android:exported="true"
             android:label="@string/trime_app_name"
             android:configChanges="orientation|screenSize|keyboardHidden"
-            android:launchMode="singleTask">
+            android:launchMode="singleTask"
+            android:windowSoftInputMode="adjustResize">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
 
@@ -63,6 +64,14 @@ SPDX-License-Identifier: GPL-3.0-or-later
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
+
+        <!-- 旧版设置页，保留以兼容 Lua 工具脚本 -->
+        <activity
+            android:name="com.osfans.trime.PrefLauncher"
+            android:exported="false"
+            android:label="@string/trime_app_name"
+            android:configChanges="orientation|screenSize|keyboardHidden"
+            android:launchMode="singleTask" />
         <activity android:name="com.osfans.trime.ToolActivity" />
         <activity
             android:name="com.androlua.LuaActivity"

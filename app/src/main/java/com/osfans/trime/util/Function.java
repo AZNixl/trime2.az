@@ -548,7 +548,9 @@ public class Function {
     }
 
     public static void showPrefDialog(Context trimeService) {
-
+        Intent intent = new Intent(trimeService, com.osfans.trime.ui.SettingsActivity.class);
+        intent.addFlags(FLAG_ACTIVITY_NEW_TASK);
+        trimeService.startActivity(intent);
     }
 
     public static void saveString(Context context, String id, String s) {

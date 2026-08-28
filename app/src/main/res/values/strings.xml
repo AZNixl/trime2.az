@@ -8,8 +8,8 @@ SPDX-License-Identifier: GPL-3.0-or-later
 
 <resources xmlns:xliff="urn:oasis:names:en:xliff:document:1.2">
     <!-- Input Method Platform Tittle  -->
-    <string name="app_name_release">Trime</string>
-    <string name="app_name_debug">Trime (Debug)</string>
+    <string name="app_name_release">中文输入法2.az</string>
+    <string name="app_name_debug">中文输入法2.az (Debug)</string>
     <!-- Preference settings -->
     <string name="settings__help_title">Help</string>
     <string name="pref_wiki">Wiki</string>
