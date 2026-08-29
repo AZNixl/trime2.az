@@ -400,15 +400,15 @@ Java_com_osfans_trime_core_Rime_changeRimeCandidatePage(JNIEnv *env,
 
 extern "C" JNIEXPORT jboolean JNICALL
 Java_com_osfans_trime_core_Rime_highlightRimeCandidate(JNIEnv *env,
-                                                    jclass /* thiz */,
-                                                    jint index) {
+                                                       jclass /* thiz */,
+                                                       jint index) {
   return Rime::Instance().highlightCandidate(index);
 }
 
 extern "C" JNIEXPORT jint JNICALL
 Java_com_osfans_trime_core_Rime_getHighlightRimeCandidate(JNIEnv *env,
-                                                       jclass /* thiz */) {
-  return Rime::Instance().getHighlightCandidate();;
+                                                          jclass /* thiz */) {
+  return Rime::Instance().getHighlightCandidate();
 }
 
 extern "C" JNIEXPORT jobjectArray JNICALL
