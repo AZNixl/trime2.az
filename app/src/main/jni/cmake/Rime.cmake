@@ -20,32 +20,48 @@ if(NOT EXISTS "${CMAKE_SOURCE_DIR}/librime/plugins/librime-lua/thirdparty")
        COPY_ON_ERROR SYMBOLIC)
 endif()
 
-find_package(Git REQUIRED)
-if(NOT Git_FOUND)
-    message(FATAL_ERROR "Git not found!")
+# Apply the Lua 5.4 Android compatibility fix to liolib.c (fixes fseeko/ftello
+# being unavailable on 32-bit devices below API 24).
+#
+# lua's lprefix.h forces _FILE_OFFSET_BITS=64, which makes bionic gate
+# fseeko/ftello behind API 24 on 32-bit ABIs. Guard the LUA_USE_POSIX l_fseek
+# branch so that 32-bit Android below API 24 falls back to fseek/ftell.
+# Patched in-place at configure time (no git/patch dependency), idempotent.
+string(ASCII 10 LUA_NL)
+set(LUA_LIOLIB_SRC
+    "${CMAKE_SOURCE_DIR}/librime/plugins/librime-lua/thirdparty/lua5.4/liolib.c")
+if(EXISTS "${LUA_LIOLIB_SRC}")
+  file(READ "${LUA_LIOLIB_SRC}" LUA_LIOLIB_CONTENT)
+  string(FIND "${LUA_LIOLIB_CONTENT}" "ANDROID" LUA_ALREADY_PATCHED)
+  if(LUA_ALREADY_PATCHED EQUAL -1)
+    string(FIND "${LUA_LIOLIB_CONTENT}" "#if !defined(l_fseek)" LUA_ANCHOR_POS)
+    if(LUA_ANCHOR_POS GREATER -1)
+      string(SUBSTRING "${LUA_LIOLIB_CONTENT}" ${LUA_ANCHOR_POS} -1 LUA_SUB_CONTENT)
+      string(FIND "${LUA_SUB_CONTENT}" "#if defined(LUA_USE_POSIX)" LUA_REL_POS)
+      if(LUA_REL_POS GREATER -1)
+        math(EXPR LUA_TARGET_POS "${LUA_ANCHOR_POS} + ${LUA_REL_POS}")
+        string(SUBSTRING "${LUA_LIOLIB_CONTENT}" ${LUA_TARGET_POS} -1 LUA_TARGET_CONTENT)
+        string(FIND "${LUA_TARGET_CONTENT}" "${LUA_NL}" LUA_REL_NL_POS)
+        if(LUA_REL_NL_POS GREATER -1)
+          math(EXPR LUA_NL_POS "${LUA_TARGET_POS} + ${LUA_REL_NL_POS}")
+          string(SUBSTRING "${LUA_LIOLIB_CONTENT}" 0 ${LUA_TARGET_POS} LUA_HEAD)
+          string(SUBSTRING "${LUA_LIOLIB_CONTENT}" ${LUA_NL_POS} -1 LUA_TAIL)
+          math(EXPR LUA_SUFFIX_START "${LUA_TARGET_POS} + 26")
+          math(EXPR LUA_SUFFIX_LEN "${LUA_NL_POS} - ${LUA_SUFFIX_START}")
+          string(SUBSTRING "${LUA_LIOLIB_CONTENT}" ${LUA_SUFFIX_START} ${LUA_SUFFIX_LEN} LUA_SUFFIX)
+          set(LUA_PATCHED_LINE
+            "#if defined(LUA_USE_POSIX) && \\${LUA_NL}   (!defined(ANDROID) || (defined(__LP64__) || ANDROID_PLATFORM >= 24))${LUA_SUFFIX}")
+          set(LUA_LIOLIB_CONTENT "${LUA_HEAD}${LUA_PATCHED_LINE}${LUA_TAIL}")
+          file(WRITE "${LUA_LIOLIB_SRC}" "${LUA_LIOLIB_CONTENT}")
+        endif()
+      endif()
+    endif()
+  endif()
 endif()
-
-set(PATCH_FILE "${CMAKE_SOURCE_DIR}/patches/lua.patch")
-set(PATCH_STAMP "${CMAKE_CURRENT_BINARY_DIR}/.git_patch_applied")
-
-add_custom_command(
-  OUTPUT ${PATCH_STAMP}
-  #COMMAND ${GIT_EXECUTABLE} apply ${PATCH_FILE} || true
-  COMMAND ${CMAKE_COMMAND} -E touch ${PATCH_STAMP}
-  COMMAND_EXPAND_LISTS
-  WORKING_DIRECTORY "${CMAKE_SOURCE_DIR}/librime/plugins/librime-lua/thirdparty"
-  DEPENDS ${PATCH_FILE}
-  VERBATIM
-)
-
-add_custom_target(apply_git_patch ALL
-  DEPENDS ${PATCH_STAMP}
-)
 
 option(BUILD_TEST "" OFF)
 option(BUILD_STATIC "" ON)
 add_subdirectory(librime)
-add_dependencies(rime-static apply_git_patch)
 target_compile_options(
   rime-static PRIVATE "-ffile-prefix-map=${CMAKE_CURRENT_SOURCE_DIR}=." "-Wno-error=deprecated-declarations")
 
