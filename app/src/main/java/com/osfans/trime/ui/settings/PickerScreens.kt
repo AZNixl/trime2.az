@@ -60,10 +60,10 @@ internal fun PickerScaffold(
                 },
                 actions = actions,
                 colors =
-                    TopAppBarDefaults.topAppBarColors(
-                        containerColor = MaterialTheme.colorScheme.surface,
-                        titleContentColor = MaterialTheme.colorScheme.onSurface,
-                    ),
+                TopAppBarDefaults.topAppBarColors(
+                    containerColor = MaterialTheme.colorScheme.surface,
+                    titleContentColor = MaterialTheme.colorScheme.onSurface,
+                ),
             )
         },
     ) { innerPadding ->
@@ -78,9 +78,9 @@ internal fun PickerHint(
 ) {
     Box(
         modifier =
-            Modifier
-                .fillMaxSize()
-                .padding(innerPadding),
+        Modifier
+            .fillMaxSize()
+            .padding(innerPadding),
         contentAlignment = Alignment.Center,
     ) {
         Text(
@@ -102,9 +102,9 @@ fun ThemeSelectScreen(onBack: () -> Unit) {
         var current by remember { mutableStateOf(Config.getTheme()) }
         LazyColumn(
             modifier =
-                Modifier
-                    .fillMaxSize()
-                    .padding(horizontal = 16.dp),
+            Modifier
+                .fillMaxSize()
+                .padding(horizontal = 16.dp),
             contentPadding = innerPadding,
             verticalArrangement = Arrangement.spacedBy(16.dp),
         ) {
@@ -142,9 +142,9 @@ fun StyleSelectScreen(onBack: () -> Unit) {
         var current by remember { mutableStateOf(Config.getStyle()) }
         LazyColumn(
             modifier =
-                Modifier
-                    .fillMaxSize()
-                    .padding(horizontal = 16.dp),
+            Modifier
+                .fillMaxSize()
+                .padding(horizontal = 16.dp),
             contentPadding = innerPadding,
             verticalArrangement = Arrangement.spacedBy(16.dp),
         ) {
@@ -185,9 +185,9 @@ fun KeyboardSelectScreen(onBack: () -> Unit) {
         var current by remember { mutableStateOf(Config.getKeyboard()) }
         LazyColumn(
             modifier =
-                Modifier
-                    .fillMaxSize()
-                    .padding(horizontal = 16.dp),
+            Modifier
+                .fillMaxSize()
+                .padding(horizontal = 16.dp),
             contentPadding = innerPadding,
             verticalArrangement = Arrangement.spacedBy(16.dp),
         ) {

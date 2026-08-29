@@ -118,27 +118,26 @@ internal object LuaNames {
         }
     }
 
-    private fun keyboardFinder(): ResourceFinder =
-        object : ResourceFinder {
-            override fun findResource(name: String): InputStream? {
-                if (name.isEmpty()) return null
-                try {
-                    if (File(name).exists()) {
-                        return FileInputStream(name)
-                    }
-                } catch (_: Exception) {
+    private fun keyboardFinder(): ResourceFinder = object : ResourceFinder {
+        override fun findResource(name: String): InputStream? {
+            if (name.isEmpty()) return null
+            try {
+                if (File(name).exists()) {
+                    return FileInputStream(name)
                 }
-                return try {
-                    FileInputStream(File(Config.getKeyboardDir(), name))
-                } catch (_: Exception) {
-                    null
-                }
+            } catch (_: Exception) {
             }
-
-            override fun findFile(filename: String): String? {
-                if (filename.isEmpty()) return null
-                if (filename.startsWith("/")) return filename
-                return File(Config.getKeyboardDir(), filename).absolutePath
+            return try {
+                FileInputStream(File(Config.getKeyboardDir(), name))
+            } catch (_: Exception) {
+                null
             }
         }
+
+        override fun findFile(filename: String): String? {
+            if (filename.isEmpty()) return null
+            if (filename.startsWith("/")) return filename
+            return File(Config.getKeyboardDir(), filename).absolutePath
+        }
+    }
 }

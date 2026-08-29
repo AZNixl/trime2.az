@@ -79,10 +79,10 @@ fun SettingsItem(
 ) {
     Row(
         modifier =
-            Modifier
-                .fillMaxWidth()
-                .clickable(onClick = onClick)
-                .padding(16.dp),
+        Modifier
+            .fillMaxWidth()
+            .clickable(onClick = onClick)
+            .padding(16.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
         SettingsItemIcon(icon)
@@ -113,10 +113,10 @@ fun SettingsItem(
 private fun SettingsItemIcon(icon: ImageVector) {
     Box(
         modifier =
-            Modifier
-                .size(40.dp)
-                .clip(RoundedCornerShape(10.dp))
-                .background(MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f)),
+        Modifier
+            .size(40.dp)
+            .clip(RoundedCornerShape(10.dp))
+            .background(MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f)),
         contentAlignment = Alignment.Center,
     ) {
         Icon(
@@ -138,10 +138,10 @@ fun RadioSettingsItem(
 ) {
     Row(
         modifier =
-            Modifier
-                .fillMaxWidth()
-                .clickable(onClick = onClick)
-                .padding(start = 16.dp, top = 8.dp, end = 8.dp, bottom = 8.dp),
+        Modifier
+            .fillMaxWidth()
+            .clickable(onClick = onClick)
+            .padding(start = 16.dp, top = 8.dp, end = 8.dp, bottom = 8.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
         SettingsItemIcon(icon)
@@ -174,10 +174,10 @@ fun CheckSettingsItem(
 ) {
     Row(
         modifier =
-            Modifier
-                .fillMaxWidth()
-                .clickable { onCheckedChange(!checked) }
-                .padding(start = 16.dp, top = 8.dp, end = 8.dp, bottom = 8.dp),
+        Modifier
+            .fillMaxWidth()
+            .clickable { onCheckedChange(!checked) }
+            .padding(start = 16.dp, top = 8.dp, end = 8.dp, bottom = 8.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
         SettingsItemIcon(icon)

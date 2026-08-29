@@ -97,9 +97,9 @@ fun SchemaSelectScreen(
         var current by remember { mutableStateOf(currentSchemaId) }
         LazyColumn(
             modifier =
-                Modifier
-                    .fillMaxSize()
-                    .padding(horizontal = 16.dp),
+            Modifier
+                .fillMaxSize()
+                .padding(horizontal = 16.dp),
             contentPadding = innerPadding,
             verticalArrangement = Arrangement.spacedBy(16.dp),
         ) {
@@ -171,10 +171,10 @@ fun SchemaManageScreen(onBack: () -> Unit) {
                     }
                 },
                 colors =
-                    TopAppBarDefaults.topAppBarColors(
-                        containerColor = MaterialTheme.colorScheme.surface,
-                        titleContentColor = MaterialTheme.colorScheme.onSurface,
-                    ),
+                TopAppBarDefaults.topAppBarColors(
+                    containerColor = MaterialTheme.colorScheme.surface,
+                    titleContentColor = MaterialTheme.colorScheme.onSurface,
+                ),
             )
         },
         bottomBar = {
@@ -189,9 +189,9 @@ fun SchemaManageScreen(onBack: () -> Unit) {
                             DeployDialog(context).show()
                         },
                         modifier =
-                            Modifier
-                                .fillMaxWidth()
-                                .padding(16.dp),
+                        Modifier
+                            .fillMaxWidth()
+                            .padding(16.dp),
                     ) {
                         Text("确定")
                     }
@@ -209,9 +209,9 @@ fun SchemaManageScreen(onBack: () -> Unit) {
         val schemas = remember { Rime.getAvailableRimeSchemaList()?.toList()?.sortedByName().orEmpty() }
         LazyColumn(
             modifier =
-                Modifier
-                    .fillMaxSize()
-                    .padding(horizontal = 16.dp),
+            Modifier
+                .fillMaxSize()
+                .padding(horizontal = 16.dp),
             contentPadding = innerPadding,
             verticalArrangement = Arrangement.spacedBy(16.dp),
         ) {
@@ -262,9 +262,9 @@ fun SchemaGroupScreen(
         var current by remember { mutableStateOf(Config.getGroup()) }
         LazyColumn(
             modifier =
-                Modifier
-                    .fillMaxSize()
-                    .padding(horizontal = 16.dp),
+            Modifier
+                .fillMaxSize()
+                .padding(horizontal = 16.dp),
             contentPadding = innerPadding,
             verticalArrangement = Arrangement.spacedBy(16.dp),
         ) {

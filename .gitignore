@@ -10,7 +10,6 @@
 .gradle/
 build/
 app/release/
-gradle.properties
 # Local configuration file (sdk path, etc)
 local.properties
 # Log/OS Files

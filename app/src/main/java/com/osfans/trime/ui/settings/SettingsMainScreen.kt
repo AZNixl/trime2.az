@@ -79,25 +79,25 @@ fun SettingsMainContent(
             MediumTopAppBar(
                 title = { Text("设置") },
                 colors =
-                    TopAppBarDefaults.topAppBarColors(
-                        containerColor = MaterialTheme.colorScheme.surface,
-                        scrolledContainerColor = MaterialTheme.colorScheme.surface,
-                        navigationIconContentColor = Color.Unspecified,
-                        titleContentColor = MaterialTheme.colorScheme.onSurface,
-                        actionIconContentColor = Color.Unspecified,
-                    ),
+                TopAppBarDefaults.topAppBarColors(
+                    containerColor = MaterialTheme.colorScheme.surface,
+                    scrolledContainerColor = MaterialTheme.colorScheme.surface,
+                    navigationIconContentColor = Color.Unspecified,
+                    titleContentColor = MaterialTheme.colorScheme.onSurface,
+                    actionIconContentColor = Color.Unspecified,
+                ),
                 scrollBehavior = scrollBehavior,
             )
         },
     ) { innerPadding ->
         LazyColumn(
             modifier =
-                Modifier
-                    .fillMaxSize()
-                    .nestedScroll(scrollBehavior.nestedScrollConnection)
-                    .consumeWindowInsets(innerPadding)
-                    .padding(horizontal = 16.dp)
-                    .imePadding(),
+            Modifier
+                .fillMaxSize()
+                .nestedScroll(scrollBehavior.nestedScrollConnection)
+                .consumeWindowInsets(innerPadding)
+                .padding(horizontal = 16.dp)
+                .imePadding(),
             contentPadding = innerPadding,
             verticalArrangement = Arrangement.spacedBy(16.dp),
         ) {
@@ -119,32 +119,32 @@ fun SettingsMainContent(
                     var isFocused by remember { mutableStateOf(false) }
                     Column(
                         modifier =
-                            Modifier
-                                .fillMaxWidth()
-                                .padding(16.dp),
+                        Modifier
+                            .fillMaxWidth()
+                            .padding(16.dp),
                     ) {
                         Box(
                             modifier =
-                                Modifier
-                                    .fillMaxWidth()
-                                    .onFocusEvent { isFocused = it.isFocused }
-                                    .clip(RoundedCornerShape(28.dp))
-                                    .background(
-                                        if (isFocused) {
-                                            MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f)
-                                        } else {
-                                            MaterialTheme.colorScheme.onSurface.copy(alpha = 0.04f)
-                                        },
-                                    ).padding(horizontal = 16.dp, vertical = 14.dp),
+                            Modifier
+                                .fillMaxWidth()
+                                .onFocusEvent { isFocused = it.isFocused }
+                                .clip(RoundedCornerShape(28.dp))
+                                .background(
+                                    if (isFocused) {
+                                        MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f)
+                                    } else {
+                                        MaterialTheme.colorScheme.onSurface.copy(alpha = 0.04f)
+                                    },
+                                ).padding(horizontal = 16.dp, vertical = 14.dp),
                         ) {
                             BasicTextField(
                                 value = testText,
                                 onValueChange = { testText = it },
                                 modifier = Modifier.fillMaxWidth(),
                                 textStyle =
-                                    MaterialTheme.typography.bodyMedium.copy(
-                                        color = MaterialTheme.colorScheme.onSurface,
-                                    ),
+                                MaterialTheme.typography.bodyMedium.copy(
+                                    color = MaterialTheme.colorScheme.onSurface,
+                                ),
                                 singleLine = false,
                                 maxLines = 3,
                                 decorationBox = { innerTextField ->
@@ -164,9 +164,9 @@ fun SettingsMainContent(
                         if (testText.isNotEmpty()) {
                             Row(
                                 modifier =
-                                    Modifier
-                                        .fillMaxWidth()
-                                        .padding(top = 8.dp),
+                                Modifier
+                                    .fillMaxWidth()
+                                    .padding(top = 8.dp),
                                 horizontalArrangement = Arrangement.End,
                             ) {
                                 TextButton(onClick = { testText = "" }) {

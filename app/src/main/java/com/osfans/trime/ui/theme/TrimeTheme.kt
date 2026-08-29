@@ -32,13 +32,9 @@ private fun hclColor(hue: Float, chroma: Float, lightness: Float): Color {
     return Color(ColorUtils.HSLToColor(floatArrayOf(hue, s, l)))
 }
 
-private fun deriveSecondaryHue(hue: Float): Float {
-    return (hue + 30f) % 360f
-}
+private fun deriveSecondaryHue(hue: Float): Float = (hue + 30f) % 360f
 
-private fun deriveTertiaryHue(hue: Float): Float {
-    return (hue + 60f) % 360f
-}
+private fun deriveTertiaryHue(hue: Float): Float = (hue + 60f) % 360f
 
 private fun hslOf(color: Color): FloatArray {
     val argb = color.toArgb()
