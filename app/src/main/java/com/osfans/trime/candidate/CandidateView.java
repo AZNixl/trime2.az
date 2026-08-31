@@ -126,7 +126,7 @@ public class CandidateView extends LinearLayout implements View.OnClickListener 
     @Override
     public void onClick(View v) {
         if (mAdapter.getItemCount()>0)
-            mTrime.showExtractedCandidatesView(true);
+            mTrime.showCandidatePanel();
         else
             mTrime.requestHideSelf(0);
     }

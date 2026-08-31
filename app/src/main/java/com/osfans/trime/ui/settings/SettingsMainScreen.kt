@@ -8,6 +8,7 @@
 
 package com.osfans.trime.ui.settings
 
+import android.content.Context
 import android.content.Intent
 import android.net.Uri
 import android.view.inputmethod.InputMethodManager
@@ -55,9 +56,12 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
+import com.androlua.LuaActivity
+import com.androlua.LuaApplication
 import com.osfans.trime.ToolActivity
 import com.osfans.trime.TrimeService
 import com.osfans.trime.dialog.DeployDialog
+import java.io.File
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -247,6 +251,22 @@ fun SettingsMainContent(
                         onClick = onNavigateToKeyboard,
                         showArrow = true,
                     )
+                    SectionDivider()
+                    SettingsItem(
+                        icon = Icons.TwoTone.Palette,
+                        title = "主题颜色编辑",
+                        subtitle = "调整当前主题的配色",
+                        onClick = { launchBuiltInTool(context, "主题颜色编辑") },
+                        showArrow = true,
+                    )
+                    SectionDivider()
+                    SettingsItem(
+                        icon = Icons.TwoTone.KeyboardAlt,
+                        title = "键盘符号编辑",
+                        subtitle = "修改按键的滑动与长按符号",
+                        onClick = { launchBuiltInTool(context, "键盘符号编辑") },
+                        showArrow = true,
+                    )
                 }
             }
 
@@ -279,4 +299,25 @@ fun SettingsMainContent(
             }
         }
     }
+}
+
+private fun launchBuiltInTool(context: Context, name: String) {
+    val app = LuaApplication.getInstance()
+    val main = File(app.getLuaExtDir("tools"), "$name/main.lua")
+    if (!main.exists()) {
+        try {
+            app.unApk("assets/tools", app.getLuaExtDir("tools"))
+        } catch (e: Exception) {
+            e.printStackTrace()
+        }
+    }
+    if (!main.exists()) {
+        Toast.makeText(context, "未找到工具脚本", Toast.LENGTH_SHORT).show()
+        return
+    }
+    val intent = Intent(context, LuaActivity::class.java)
+    intent.setData(Uri.parse(main.absolutePath))
+    intent.addFlags(Intent.FLAG_ACTIVITY_NEW_DOCUMENT)
+    intent.addFlags(Intent.FLAG_ACTIVITY_MULTIPLE_TASK)
+    context.startActivity(intent)
 }

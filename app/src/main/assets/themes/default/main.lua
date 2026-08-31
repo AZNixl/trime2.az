@@ -1,19 +1,9 @@
-name = "默认"
-author = "nirenr"
-style = "light"
-keyboard = "qwerty26"
-
-function get_keyboard(id, alphabet)
-    if id == "" then
-        return keyboard
-    end
-    if string.find(alphabet, "%d") then
-        return "qwerty36"
-    end
-    if string.find(alphabet, "/") then
-        return "qwerty27"
-    end
-    return keyboard
+name = "AZ"
+author = "AZNixl"
+style="春芽初醒"
+keyboard="26键"
+function get_keyboard(id,alphabet)
+    return "26键"
 end
 action_labels = {
     none = "Enter", --默认状态
@@ -37,116 +27,125 @@ preset_keys = {
     POWER = { label = "電源", send = "POWER" },
     SEARCH = { label = "搜尋", send = "Find" },
     SLEEP = { label = "休眠", send = "SLEEP" },
-    VOICE_ASSIST = { label = "语 音", send = "VOICE_ASSIST" },
+    VOICE_ASSIST = { label = "voicePNG", send = "VOICE_ASSIST" },
     VOLUME_DOWN = { label = "音量 -", send = "VOLUME_DOWN" },
     VOLUME_UP = { label = "音量 +", send = "VOLUME_UP" },
     VOLUME_MUTE = { label = "靜音", send = "VOLUME_MUTE" },
     -- 編輯
-    Shift_L = { label = "Shift", send = "Shift_L", shift_lock = "double" }, --shift_lock click,double,long
+    Shift_L = { label = "shift1", send = "Shift_L", shift_lock = "ascii_long" },
     Return = { label = "action_labels", send = "Return" },
-    Return1 = { label = "Enter", send = "Return" },
+    Return1 = { label = "ent", send = "Return" },
     Return2 = { label = "回车", send = "Return" },
     Hide = { label = "隱藏", send = "BACK" },
-    BackSpace = { label = " ⌫", description = "退格", repeatable = true, send = "BackSpace" },
+    BackSpace = { label = "del1", description = "退格", repeatable = true, send = "BackSpace" },
     space = { repeatable = false, send = "space" },
-    space1 = { label = "␣", repeatable = false, send = "space" },
+    space1 = { label = "spacePNG", repeatable = false, send = "space" },
     Escape = { label = "Esc", send = "Escape" },
-    Home = { label = "行首", send = "Home" },
+    Home = { label = "⇤", send = "Home" },
     Insert = { label = "插入", send = "Insert" },
-    Delete = { label = "刪除", send = "Delete" },
-    End = { label = "行尾", send = "End" },
-    Page_Up = { label = "上页", send = "Page_Up" },
-    Page_Down = { label = "下页", send = "Page_Down" },
+    Delete = { label = "Del", send = "Delete" },
+    End = { label = "⇥", send = "End" },
+    Page_Up = { label = "◁", send = "Page_Up" },
+    Page_Down = { label = "▷", send = "Page_Down" },
     Left = { label = "←", send = "Left" },
     Down = { label = "↓", send = "Down" },
     Up = { label = "↑", send = "Up" },
     Right = { label = "→", send = "Right" },
-    select_all = { label = "全选", send = "Control+a" },
+    select_all = { label = "☑", send = "Control+a" },
     Clear = { label = "清除", text = "{Control+a}{BackSpace}" }, --全選並刪除
-    cut = { label = "剪切", send = "Control+x" },
+    cut = { label = "✁", send = "Control+x" },
+    SelectCandidate = { laber = "删前一位", text = "{commit}{BackSpace}"},
     cut_all = { label = "全剪", text = "{Control+a}{Control+x}" }, --全選並剪切
-    copy = { label = "复制", send = "Control+c" },
+    copy = { label = "❐", send = "Control+c" },
     copy_all = { label = "全部复制", text = "{Control+a}{Control+c}" }, --全選並複製
-    paste = { label = "粘贴", send = "Control+v" },
+    paste = { label = "▣", send = "Control+v" },
     paste_text = { label = "粘贴文本", send = "Control+Shift+Alt+v" }, -->=Android 6.0
     share_text = { label = "分享文本", send = "Control+Alt+s" }, -->=Android 6.0
-    redo = { label = "重做", send = "Control+Shift+z" }, -->=Android 6.0
-    undo = { label = "撤销", send = "Control+z" }, -->=Android 6.0
+    redo = { label = "redo", send = "Control+Shift+z" }, -->=Android 6.0
+    undo = { label = "undo", send = "Control+z" }, -->=Android 6.0
+    -- Tab = { lebel = "Tab", send = "Tab"}
     -- rime組合鍵
-    F4 = { label = "菜单", send = "Control+grave" },
+    F4 = { label = "菜单", send = "F4" },
     BackToPreviousSyllable = { label = "删音节", send = "Control+BackSpace" },
     CommitRawInput = { label = "编码", send = "Control+Return" },
     CommitScriptText = { label = "编码", send = "Shift+Return" },
     CommitComment = { label = "编码", send = "Control+Shift+Return" },
     DeleteCandidate = { label = "删词", send = "Control+Delete" },
-    delimiter = { label = "分词", text = "'", description = "分词" },
+    delimiter = {label = "分词", text = "'", description = "分词"},
     -- rime狀態
-    Mode_switch = { toggle = "ascii_mode", send = "Mode_switch", states = { "中文", "英文" } },
+    Mode_switch = { toggle = "ascii_mode", send = "Mode_switch", states = {"中文", "英文" } },
     Zenkaku_Hankaku = { toggle = "full_shape", send = "Mode_switch", states = { "半角", "全角" } },
-    Henkan = { toggle = "simplification", send = "Mode_switch", states = { "繁體", "简体" } },
-    Charset_switch = { toggle = "extended_charset", send = "Mode_switch", states = { "常用", "增廣" } },
+    Henkan = { toggle = "simplification", send = "Mode_switch", states = { "简体", "繁体" } },
+    Charset_switch = { toggle = "extended_char", send = "Mode_switch", states = { "全字集", "常用字" } },
     Punct_switch = { toggle = "ascii_punct", send = "Mode_switch", states = { "。，", "．，" } },
-    --切换键盘
-    Keyboard_symbols = { label = "符号", send = "Eisu_toggle", select = "symbols" },
-    Keyboard_symbols_ext = { label = "更多", send = "Eisu_toggle", select = "symbols_ext" },
-    Keyboard_number = { label = "数字", send = "Eisu_toggle", select = "number" },
+    Keyboard_menu = { label = "menu", send = "Eisu_toggle", select = "功能键盘/menu" },
+    Keyboard_editor = {label = "edit", send = "Eisu_toggle", select = "功能键盘/editor"},
+    Keyboard_number = { label = "123", send = "Eisu_toggle", select = "功能键盘/number" },
+    Keyboard_symbols_en = { label = "英文", send = "Eisu_toggle", select = "功能键盘/symbols_en" },
+    Keyboard_symbols_cn = { label = "中文", send = "Eisu_toggle", select = "功能键盘/symbols_cn" },
     Keyboard_letter = { label = "字母", send = "Eisu_toggle", select = "default" },
     Keyboard_default = { label = "返回", send = "Eisu_toggle", select = ".default" },
     Keyboard_switch = { label = "鍵盤", send = "Eisu_toggle", select = ".next" },
     Keyboard_clipboard = { label = "剪贴板", send = "Eisu_toggle", select = "clipboard" },
-    Keyboard_phrase = { label = "短语", send = "Eisu_toggle", select = "phrase" },
-    Keyboard_editor = { label = "编辑", send = "Eisu_toggle", select = "editor" },
+    keyboard_clip = { label = "剪切板", send = "Eisu_toggle", select = "clipBoard" },
+    Keyboard_settings = { label = "键盘", send = "SETTINGS", option = "keyboard" }, --添加select参数可以直接设置指定键盘
     -- trime設定
-    IME_switch = { label = "🌐", send = "LANGUAGE_SWITCH" }, --彈出對話框選擇輸入法
+    IME_switch = { label = "imePNG", send = "LANGUAGE_SWITCH" }, --彈出對話框選擇輸入法
     IME_last = { label = "上一输入法", send = "LANGUAGE_SWITCH", select = ".last" }, --直接切換到上一輸入法
     IME_next = { label = "下一输入法", send = "LANGUAGE_SWITCH", select = ".next" }, --直接切換到下一輸入法
     Schema_switch = { label = "下一方案", send = "Control+Shift+1" },
-    Color_switch = { label = "样式", send = "PROG_RED" },
+    Color_switch = { label = "配色", send = "PROG_RED" },
     Menu = { label = "方案", send = "Menu" },
-    Settings = { label = "设置", send = "SETTINGS" },
-    Color_settings = { label = "样式", send = "SETTINGS", option = "color" }, --添加select参数可以直接设置指定配色
-    Theme_settings = { label = "主題", send = "SETTINGS", option = "theme" }, --添加select参数可以直接设置指定主题
-    Schema_settings = { label = "方案", send = "SETTINGS", option = "schema" }, --添加select参数可以直接设置指定方案
+    Settings = { label = "設定", send = "SETTINGS" },
+    Color_settings = { label = "◲", send = "SETTINGS", option = "color" },
+    Theme_settings = { label = "theme", send = "SETTINGS", option = "theme" },
+    Schema_settings = { label = "方案", send = "SETTINGS", option = "schema" },
     Schema_group = { label = "方案组", send = "SETTINGS", option = "group" }, --添加select参数可以直接设置指定方案
-    Keyboard_settings = { label = "键盘", send = "SETTINGS", option = "keyboard" }, --添加select参数可以直接设置指定键盘
     Candidate_switch = { toggle = "_hide_candidate", send = "Mode_switch", states = { "有候选", "无候选" } },
     Comment_switch = { toggle = "_hide_comment", send = "Mode_switch", states = { "有注释", "无注释" } },
     Hint_switch = { toggle = "_hide_key_hint", send = "Mode_switch", states = { "有助記", "無助記" } },
-
-    --候选过滤
-    Filter_h = { label = "一", command = "filter", option = "h" },
-    Filter_s = { label = "丨", command = "filter", option = "s" },
-    Filter_p = { label = "丿", command = "filter", option = "p" },
-    Filter_n = { label = "丶", command = "filter", option = "n" },
-    Filter_z = { label = "乙", command = "filter", option = "z" },
-    Filter_x = { label = "X", command = "filter", option = "" },
-    Filter_char = { label = "字/词", command = "filter", option = "char" },
-    Mode_small = { toggle = "small_mode", send = "Mode_switch", states = { "单手关", "单手开" } },
-    Mode_float = { toggle = "float_mode", send = "Mode_switch", states = { "悬浮关", "悬浮开" } },
-
     -- trime命令
-    LunarDate = { label = "农历", command = "nongli.lua" },
     Date = { label = "日期", command = "date", option = "yyyy-MM-dd" },
-    ChineseDate = { label = "农历", command = "date", option = "zh_CN@calendar=chinese" }, --農曆等日期(>=Android 7.0)：date 語言@calendar=曆法 格式。具體參見https://developer.android.com/reference/android/icu/util/Calendar.html
+    ChineseDate = { label = "农历", command = "date", option = "zh_CN@calendar=chinese" }, --農曆等日期(>=Android 7.0)：date 語言@calendar=曆法 格式。具體參見https=//developer.android.com/reference/android/icu/util/Calendar.html
     Time = { label = "时间", command = "date", option = "HH=mm=ss" }, --時間： date 格式
     TrimeApp = { label = "同文", command = "run", option = "com.osfans.trime" }, --運行程序= run 包名
     TrimeCmp = { label = "同文组件", command = "run", option = "com.osfans.trime/.ui.main.MainActivity" }, --運行程序指定組件= run 包名/組件名
-    Homepage = { label = "同文主页", command = "run", option = "https://github.com/osfans/trime" }, --查看網頁= run 網址
-    CommitHomepage = { label = "同文网址", commit = "https://github.com/osfans/trime" }, --直接上屏
-    Wiki = { label = "维基", command = "run", option = "https://zh.wikipedia.org/wiki/%s" }, --搜索網頁= %s或者%1$s爲當前字符
-    Google = { label = "谷歌", command = "run", option = "https://www.google.com/search?q=%s" }, --搜索網頁= %s或者%1$s爲當前字符
-    MoeDict = { label = "萌典", command = "run", option = "https://www.moedict.tw/%3$s" }, --搜索網頁= %3$s爲光標前字符
-    Baidu = { label = "百度搜索", command = "run", option = "https://www.baidu.com/s?wd=%4$s" }, --搜索網頁= %4s爲光標前所有字符
-    Zdic = { label = "漢典", command = "run", option = "http://www.zdic.net/hans/%1$s" }, --搜索網頁= %s或者%1$s爲當前字符
-    Zdic2 = { label = "漢典", command = "run", option = "http://www.zdic.net/hans/%2$s" }, --搜索網頁= %2$s爲當前輸入的編碼
-    WebSearch = { label = "搜索网页", command = "web_search", option = "%4$s" }, --搜索，其他view、dial、edit、search等intent，參考安卓的intent文檔：https://developer.android.com/reference/android/content/Intent.html
+    Homepage = { label = "同文主页", command = "run", option = "https=//github.com/osfans/trime" }, --查看網頁= run 網址
+    CommitHomepage = { label = "同文网址", commit = "https = //github.com/osfans/trime" }, --直接上屏
+    Wiki = { label = "维基", command = "run", option = "https=//zh.wikipedia.org/wiki/%s" }, --搜索網頁= %s或者%1$s爲當前字符
+    Google = { label = "谷歌", command = "run", option = "https=//www.google.com/search?q=%s" }, --搜索網頁= %s或者%1$s爲當前字符
+    MoeDict = { label = "萌典", command = "run", option = "https=//www.moedict.tw/%3$s" }, --搜索網頁= %3$s爲光標前字符
+    Baidu = { label = "百度搜索", command = "run", option = "https=//www.baidu.com/s?wd=%4$s" }, --搜索網頁= %4s爲光標前所有字符
+    Zdic = { label = "漢典", command = "run", option = "http=//www.zdic.net/sousuo/?q=%1$s" }, --搜索網頁= %s或者%1$s爲當前字符
+    Zdic2 = { label = "漢典", command = "run", option = "http=//www.zdic.net/sousuo/?q=%2$s" }, --搜索網頁= %2$s爲當前輸入的編碼
+    WebSearch = { label = "搜索网页", command = "web_search", option = "%4$s" }, --搜索，其他view、dial、edit、search等intent，參考安卓的intent文檔：https=//developer.android.com/reference/android/content/Intent.html
     Search = { label = "搜索", command = "search", option = "%1$s" }, --搜索短信、字典等
     Share = { label = "分享", command = "send", option = "%s" }, --分享指定文本= %s或者%1$s爲當前字符
-    Deploy = { label = "部署", command = "deploy" },
+    Deploy = { label = "部署", command = "broadcast", option = "com.osfans.trime.action.DEPLOY" },
+    ToolsManager = { label = "工具箱", command = "工具箱.lua" },
     Sync = { label = "同步", command = "broadcast", option = "com.osfans.trime.action.SYNC_USER_DATA" },
-    RepeatCommit = { label = "重复", command = "commit", option = "%1$s" }, --重复输入刚上屏的内容
-    AddPhrase = { label = "添加", command = "add_phrase", option = "%1$s" }, --将输入的内容添加到短语
-
+    RepeatCommit = { label = "重复", command = "commit", option = "%1$s" },
+    -- 用户定义 以下部份摘自秋月|小鹤主题
+    select_2 = {label = "次选", send = 2},
+    select_3 = {label = "三选", send = 3},
+    select_4 = {label = "四选", send = 4},
+    DelH = { functional = false, text = "{END}{Shift+Home}{Delete}" },
+    select_H = {label = "↔", functional = false, text = "{End}{Shift+Home}"},
+    logcat = { command = "LogCat.lua", label = "log"},
+    jtb = { label = "clip", send = "Eisu_toggle", select = "clipboard" },
+    emoji = { command = "emoji.lua", label = "emoji" },
+    restheme = { label = "重载主题", command = "重载主题.lua" },
+    auto_land = { toggle = "landscape_kb", send = "Mode_switch", states = { "自动悬浮", "横屏键盘" } },
+    hover_set = { label = "悬浮窗设置", command = "悬浮窗设置.lua" },
+    move_set = { label = "手势参数", command = "手势参数设置.lua" },
+    all_switch = { label = "样式开关", command = "全局开关.lua" },
+    game2048 = { command = "2048.lua", label = "2048"},
+    Tab = { label = "↹", send = "Tab"},
+    Shift1 = { label = "☩", send = "Shift_L", shift_lock = "click" },
+    space2 = { repeatable = true, send = "space", preview = "␣", functional = false},
+    Mode_small= {toggle= "small_mode", send= "Mode_switch", states= {"ds", "ds1"}},--单手模式
+    Mode_float= {toggle= "float_mode", send= "Mode_switch", states= {"xf", "xf1"}},--悬浮模式
+  -- AI
     gpt1 = {
         label = "生成",
         send = "function",
@@ -160,10 +159,10 @@ preset_keys = {
         option = "润色以下内容 %4$s"
     },
     gpt3 = {
-        label = "改错",
+        label = "翻译",
         send = "function",
         command = "gpt",
-        option = "改正以下内容的文字与错误 %4$s"
+        option = "翻译以下内容 %4$s"
     },
     gpt4 = {
         label = "续写",
@@ -172,11 +171,9 @@ preset_keys = {
         option = "根据以下内容续写 %4$s"
     },
     gpt5 = {
-        label = "小v",
+        label = "小V",
         send = "function",
         command = "gpt",
         option = "%4$s"
     }
 }
---支持回调，onConfigurationChanged，onStartInput，onWindowShown，onWindowHidden，onFinishInput，onDestroy,onSpeechResults
-

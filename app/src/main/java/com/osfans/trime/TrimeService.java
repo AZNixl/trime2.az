@@ -10,6 +10,7 @@ import static com.osfans.trime.core.RimeKeyMap.RimeKey_VoidSymbol;
 import android.app.AlertDialog;
 import android.content.ClipData;
 import android.content.ClipboardManager;
+import android.content.SharedPreferences;
 import android.content.res.Configuration;
 import android.graphics.PixelFormat;
 import android.graphics.Rect;
@@ -47,6 +48,7 @@ import androidx.core.view.accessibility.AccessibilityViewCommand;
 import com.androlua.LuaActivity;
 import com.androlua.LuaDialog;
 import com.androlua.LuaUtil;
+import com.osfans.trime.candidate.CandidatePanelView;
 import com.osfans.trime.candidate.CandidateView;
 import com.osfans.trime.candidate.CandidatesManager;
 import com.osfans.trime.core.CandidateItem;
@@ -218,6 +220,8 @@ public class TrimeService extends InputMethodService {
         showCustomView(null);
         String soft_cursor_key = "soft_cursor";
         Rime.setRimeOption(soft_cursor_key, true); //軟光標
+        applyLandscapeMode();
+        catchUpClipboard();
         ThemeManager.callFunction("onWindowShown");
         mSpeech = new Speech(this);
     }
@@ -272,6 +276,7 @@ public class TrimeService extends InputMethodService {
             // Clear composing text and candidates for orientation change.
             escape();
             orientation = newConfig.orientation;
+            applyLandscapeMode();
             mRootInputView.setTheme(Config.getTheme());
         }
         if (uiMode != newConfig.uiMode) {
@@ -1023,6 +1028,7 @@ public class TrimeService extends InputMethodService {
         mCurrSelStart = newSelStart;
         previousIdx = 0;
         nextIdx = 0;
+        updateClipCandidateLifecycle();
     }
 
 
@@ -1053,6 +1059,15 @@ public class TrimeService extends InputMethodService {
         mRootInputView.showExtractedCandidatesView(b);
         mShowExtractedCandidatesView = b;
         //updateCandidate();
+    }
+
+    // 展开候选面板（原生整合）：替换键盘区域显示全部候选卡片
+    public void showCandidatePanel() {
+        showCustomView(new CandidatePanelView(this));
+    }
+
+    public void hideCandidatePanel() {
+        showCustomView(null);
     }
 
     public void showSymbolsView(boolean b) {
@@ -1579,6 +1594,7 @@ public class TrimeService extends InputMethodService {
                             if (!TextUtils.isEmpty(addedText)) {
                                 String text = addedText.toString();
                                 addClipboard(text);
+                                onClipboardCopied(text);
                                 lastProcessTime = currentTime;
                             }
                         }
@@ -1599,6 +1615,110 @@ public class TrimeService extends InputMethodService {
         if (manager == null)
             return;
         manager.removePrimaryClipChangedListener(mOnPrimaryClipChangedListener);
+    }
+
+    // ---------------- 复制自动添加到候选（原生整合） ----------------
+    private String mClipPending;
+    private boolean mClipSeenComposing;
+
+    private void onClipboardCopied(String text) {
+        if (TextUtils.isEmpty(text) || text.trim().isEmpty())
+            return;
+        mClipPending = text;
+        mClipSeenComposing = false;
+        tryShowClipCandidate();
+    }
+
+    private void tryShowClipCandidate() {
+        if (mClipPending == null)
+            return;
+        if (Rime.isComposing()) {
+            mClipSeenComposing = true;
+            return;
+        }
+        if (mClipSeenComposing) {
+            mClipPending = null;
+            return;
+        }
+        if (!isInputViewShown())
+            return;
+        ArrayList<String> list = new ArrayList<>();
+        list.add(mClipPending);
+        setCandidates(list);
+    }
+
+    // 编码状态变化时推进剪贴板候选的生命周期（打字即过期）
+    private void updateClipCandidateLifecycle() {
+        if (mClipPending == null)
+            return;
+        if (Rime.isComposing()) {
+            mClipSeenComposing = true;
+        } else if (mClipSeenComposing) {
+            mClipPending = null;
+        }
+    }
+
+    // 键盘打开时补读剪贴板：监听在部分系统（Android 10+ 后台）可能不触发
+    private void catchUpClipboard() {
+        if (mClipPending != null) {
+            tryShowClipCandidate();
+            return;
+        }
+        if (manager == null)
+            return;
+        try {
+            if (!manager.hasPrimaryClip())
+                return;
+            ClipData clip = manager.getPrimaryClip();
+            if (clip == null || clip.getItemCount() == 0)
+                return;
+            CharSequence cs = clip.getItemAt(0).getText();
+            if (TextUtils.isEmpty(cs))
+                return;
+            String text = cs.toString();
+            if (text.trim().isEmpty())
+                return;
+            if (mClipboard == null || mClipboard.isEmpty() || !text.equals(mClipboard.get(0))) {
+                addClipboard(text);
+                onClipboardCopied(text);
+            }
+        } catch (SecurityException e) {
+            Log.e("Clipboard", "No permission to access clipboard: " + e.getMessage());
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
+    // ---------------- 横屏自动悬浮 / 横屏键盘（原生整合） ----------------
+    private void applyLandscapeMode() {
+        SharedPreferences pref = Function.getPref(this);
+        if (isLandscape()) {
+            if (Rime.getRimeOption("landscape_kb")) {
+                // 横屏键盘模式：记住当前键盘并切换
+                final String cur = Config.getKeyboard();
+                if (cur == null || !"26横屏".equals(cur)) {
+                    pref.edit().putString("land_kb_prev", cur == null ? "" : cur).apply();
+                    mHandler.post(() -> setKeyboard("26横屏"));
+                }
+            } else if (!Rime.getRimeOption("float_mode")) {
+                // 自动悬浮：记录是脚本自动开的，竖屏时还原
+                pref.edit().putString("auto_float", "1").apply();
+                Rime.setRimeOption("float_mode", true);
+            }
+        } else {
+            if (!pref.getString("auto_float", "").isEmpty()) {
+                pref.edit().remove("auto_float").apply();
+                Rime.setRimeOption("float_mode", false);
+            }
+            String prev = pref.getString("land_kb_prev", null);
+            if (prev != null) {
+                pref.edit().remove("land_kb_prev").apply();
+                if (!prev.isEmpty()) {
+                    final String kb = prev;
+                    mHandler.post(() -> setKeyboard(kb));
+                }
+            }
+        }
     }
 
 

@@ -135,6 +135,11 @@ public class KeyView extends FrameLayout implements View.OnClickListener {
         initKey();
     }
 
+    // 供 KeyGestures 识别当前键（退格/空格）
+    public Key getKey() {
+        return mKey;
+    }
+
     // --- 4. 生命周期与重写方法 (Overrides) ---
 
     @Override
@@ -1170,6 +1175,9 @@ public class KeyView extends FrameLayout implements View.OnClickListener {
                 return true;
             }
         }
+        // 原生手势：退格滑动删除 / 空格滑动移光标
+        if (KeyGestures.handleTouchEvent(this, event))
+            return true;
         if (mKey == null || !mKey.hasSwipeEvent())
             return super.onTouchEvent(event);
 
