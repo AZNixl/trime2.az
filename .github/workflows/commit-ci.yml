@@ -15,8 +15,6 @@ jobs:
       matrix:
         os:
           - ubuntu-24.04
-          - macos-15
-          - windows-2025
     env:
       BUILD_ABI: armeabi-v7a,arm64-v8a
     steps:
