@@ -383,12 +383,7 @@ public class CandidatePanelView extends LinearLayout {
     // ---------------- 滚动条同步与拖动 ----------------
 
     private void attachScrollSync() {
-        Runnable sync = new Runnable() {
-            @Override
-            public void run() {
-                updateThumb();
-            }
-        };
+        android.view.ViewTreeObserver.OnScrollChangedListener sync = this::updateThumb;
         if (mScroll instanceof ScrollView) {
             ((ScrollView) mScroll).getViewTreeObserver()
                     .addOnScrollChangedListener(sync);
