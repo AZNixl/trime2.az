@@ -18,7 +18,7 @@ jobs:
           - macos-15
           - windows-2025
     env:
-      BUILD_ABI: armeabi-v7a,arm64-v8a,x86,x86_64
+      BUILD_ABI: armeabi-v7a,arm64-v8a
     steps:
       - name: Fetch source code
         uses: actions/checkout@v5
@@ -85,14 +85,6 @@ jobs:
         with:
           name: trime-${{ matrix.os }}
           path: app/build/outputs/apk/debug/
-          # keep 90 days
-          retention-days: 90
-
-      - name: Upload APK artifact (ARM64_V8A only)
-        uses: actions/upload-artifact@v5
-        with:
-          name: trime-arm64-v8a-${{ matrix.os }}
-          path: app/build/outputs/apk/debug/*arm64-v8a-*.apk
           # keep 90 days
           retention-days: 90
 
